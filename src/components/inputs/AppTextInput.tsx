@@ -5,14 +5,16 @@ import { AppColors } from '../styles/colors';
 
 interface AppTextInputProps {
   placeholder: string;
+  secureTextEntry?:boolean;
 }
 
-const AppTextInput: React.FC<AppTextInputProps> = ({ placeholder }) => {
+const AppTextInput: React.FC<AppTextInputProps> = ({ placeholder,secureTextEntry }) => {
   return (
     <View>
       <TextInput
         style={styles.placeholder}
         placeholder={placeholder}
+        secureTextEntry={secureTextEntry}
       />
     </View>
   )

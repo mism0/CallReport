@@ -30,7 +30,7 @@ const Login = () => {
         <AppTextInput placeholder="Enter your email" />
 
         <Text style={styles.inputTitle}>Password</Text>
-        <AppTextInput placeholder="Enter your password"/>
+        <AppTextInput placeholder="Enter your password" secureTextEntry={true}/>
 
         <SignInButton/>
         {/* <Button  onPress={navigateToRegister} title='Go to Register'/> */}
