@@ -1,0 +1,24 @@
+# Query: com.marvin.call_repor
+# ContextLines: 1
+
+5 results - 4 files
+
+android\app\build.gradle:
+  84  
+  85:     namespace "com.marvin.call_report"
+  86      defaultConfig {
+  87:         applicationId "com.marvin.call_report"
+  88          minSdkVersion rootProject.ext.minSdkVersion
+
+android\app\src\main\AndroidManifest.xml:
+  2  <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  3:     package="com.marvin.call_report">
+  4      <uses-permission android:name="android.permission.INTERNET" />
+
+android\app\src\main\java\com\marvin\call_report\MainActivity.kt:
+  1: package com.marvin.call_report
+  2  
+
+android\app\src\main\java\com\marvin\call_report\MainApplication.kt:
+  1: package com.marvin.call_report
+  2  

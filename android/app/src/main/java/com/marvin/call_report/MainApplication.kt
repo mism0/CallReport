@@ -1,4 +1,4 @@
-package com.call_report
+package com.marvin.call_report
 
 import android.app.Application
 import com.facebook.react.PackageList

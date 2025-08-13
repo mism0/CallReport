@@ -8,6 +8,7 @@ import AddCalls from '../screens/home/AddCalls';
 const Stack = createStackNavigator();
 
 const HomeStack = () => {
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="BottomTabs" component={BottomTabs} />

@@ -6,11 +6,15 @@ import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 //import MaterialIcon from 'react-native-vector-icons/MaterialIcon';// Ensure you have this package installed
 
-const SignInButton = () => {
+type SignInButtonProps = {
+  handleLogin: () => void;
+};
+
+const SignInButton: React.FC<SignInButtonProps> = ({ handleLogin }) => {
   const navigation = useNavigation();
   return (
     <TouchableOpacity
-      onPress={() => navigation.navigate('HomeStack')}
+      onPress={handleLogin}
       style={styles.button}
     >
       <View style={styles.textView}>

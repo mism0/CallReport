@@ -1,4 +1,4 @@
-package com.call_report
+package com.marvin.call_report
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
