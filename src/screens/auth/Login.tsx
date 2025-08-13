@@ -58,6 +58,7 @@ const Login = () => {
         <AppTextInput placeholder="Enter your email" />
 
         <Text style={styles.inputTitle}>Password</Text>
+
         <AppTextInput placeholder="Enter your password"/> */}
 
         {/* <SignInButton handleLogin={handleLogin}/> */}
@@ -76,6 +77,7 @@ const Login = () => {
           secureTextEntry
           style={{ borderWidth: 1, marginBottom: 10, padding: 8}}
         />
+
 
         <Button title="Login" onPress={handleLogin} />
         {/* <GoogleSignInLessons/> */}

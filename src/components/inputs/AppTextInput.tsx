@@ -6,6 +6,7 @@ import { AppColors } from '../styles/colors';
 interface AppTextInputProps {
   onChangeText?: (text: string) => void;
   placeholder: string;
+
   value: string;
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'numeric';
@@ -30,11 +31,13 @@ const AppTextInput: React.FC<AppTextInputProps> = ({
   maxLength,
   multiline,
 }) => {
+
   return (
     <View>
       <TextInput
         style={[styles.placeholder, style]}
         placeholder={placeholder}
+
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
@@ -44,6 +47,7 @@ const AppTextInput: React.FC<AppTextInputProps> = ({
         numberOfLines={numberOfLines}
         maxLength={maxLength}
         multiline={multiline}
+
       />
     </View>
   );
