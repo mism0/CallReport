@@ -4,22 +4,31 @@ import { s, vs } from 'react-native-size-matters';
 import { AppColors } from '../styles/colors';
 import { AppFonts } from '../styles/fonts';
 
-const CallCards = () => {
+type ReportType = {
+  date: string;
+  order: string;
+  customer: string;
+  remarks: string;
+  // Add other fields as needed, e.g. customer, remarks, etc.
+};
+
+const CallCards = ({ report }: { report: ReportType }) => {
+
   return (
     <View style={styles.container}>
       <View style={styles.titleView}>
-        <Text style={styles.titleText}>#20250707</Text>
+        <Text style={styles.titleText}>{report.date}</Text>
       </View>
       <View style={styles.callDateView}>
         <Text style={styles.bodyText}>Date of Call</Text>
-        <Text style={styles.bodyText}>Marketing</Text>
+        <Text style={styles.bodyText}>{report.order}</Text>
       </View>
       <View style={styles.customerView}>
-        <Text numberOfLines={1} style={styles.bodyText}>Customer: Juan Dela Cruz </Text>
+        <Text numberOfLines={1} style={styles.bodyText}>Customer: {report.customer} </Text>
       </View>
 
       <View style={styles.customerView}>
-        <Text numberOfLines={2} style={styles.bodyText}>Remarks: </Text>
+        <Text numberOfLines={2} style={styles.bodyText}>Remarks: {report.remarks} </Text>
       </View>
     </View>
   );

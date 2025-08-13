@@ -4,9 +4,14 @@ import { s } from 'react-native-size-matters'
 import { AppColors } from '../styles/colors'
 import { AppFonts } from '../styles/fonts'
 
-const AppButtons = ({ title = 'Submit' }) => {
+type AppButtonsProps = {
+  title?: string;
+  onPress: () => void;
+};
+
+const AppButtons: React.FC<AppButtonsProps> = ({ title = 'Submit', onPress }) => {
   return (
-    <TouchableOpacity>
+    <TouchableOpacity onPress={onPress}>
         <View style={styles.button}>
             <Text style={{ color: AppColors.white, fontFamily: AppFonts.Bold ,fontSize: s(14)}}>{title}</Text>
         </View>

@@ -1,24 +1,55 @@
-import { StyleSheet, TextInput, View } from 'react-native'
-import React from 'react'
-import { s, vs } from 'react-native-size-matters'
+import { StyleSheet, TextInput, TextStyle, View } from 'react-native';
+import React from 'react';
+import { s, vs } from 'react-native-size-matters';
 import { AppColors } from '../styles/colors';
 
 interface AppTextInputProps {
+  onChangeText?: (text: string) => void;
   placeholder: string;
+  value: string;
+  secureTextEntry?: boolean;
+  keyboardType?: 'default' | 'email-address' | 'numeric';
+  style?: TextStyle;
+  editable?: boolean;
+  onFocus?: () => void;
+  numberOfLines?: number;
+  maxLength?: number;
+  multiline?: boolean;
 }
 
-const AppTextInput: React.FC<AppTextInputProps> = ({ placeholder }) => {
+const AppTextInput: React.FC<AppTextInputProps> = ({
+  style,
+  placeholder,
+  value,
+  onChangeText,
+  secureTextEntry,
+  keyboardType,
+  numberOfLines,
+  editable,
+  onFocus,
+  maxLength,
+  multiline,
+}) => {
   return (
     <View>
       <TextInput
-        style={styles.placeholder}
+        style={[styles.placeholder, style]}
         placeholder={placeholder}
+        value={value}
+        onChangeText={onChangeText}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
+        editable={editable}
+        onFocus={onFocus}
+        numberOfLines={numberOfLines}
+        maxLength={maxLength}
+        multiline={multiline}
       />
     </View>
-  )
-}
+  );
+};
 
-export default AppTextInput
+export default AppTextInput;
 
 const styles = StyleSheet.create({
   placeholder: {
@@ -30,4 +61,4 @@ const styles = StyleSheet.create({
     fontSize: s(12),
     marginTop: vs(10),
   },
-})
+});

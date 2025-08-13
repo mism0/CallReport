@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import AppSafeViews from '../../components/views/AppSafeViews';
 import { AppColors } from '../../components/styles/colors';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
@@ -16,6 +16,14 @@ import { AppFonts } from '../../components/styles/fonts';
 import BarChart from '../../components/charts/BarChart';
 import { useNavigation } from '@react-navigation/native';
 import HomeHeaders from '../../components/headers/HomeHeaders';
+import {
+  collection,
+  getCountFromServer,
+  getDocs,
+  query,
+  where,
+} from '@react-native-firebase/firestore';
+import { auth, db } from '../../components/config/firebaseConfig';
 const Home = () => {
   const navigation = useNavigation();
   const sampleData = [
@@ -26,6 +34,55 @@ const Home = () => {
     { label: '2', value: 2, color: 'lightblue' },
     { label: '9', value: 9, color: 'tomato' },
   ];
+
+  const [callReport, setCallReport] = useState<any[]>([]);
+
+  const fetchCallReport = async () => {
+    const callReportRef = collection(db, 'call_reports');
+    const userId = auth.currentUser?.uid; // Get the current user's ID
+    const q = query(callReportRef, where('userId', '==', userId)); // Filter by userId
+
+    const snapshot = await getDocs(q);
+    // Include document ID + all fields
+    const callReportList = snapshot.docs.map((doc: any) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    return callReportList;
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      const data = await fetchCallReport();
+      setCallReport(data);
+    };
+    loadData();
+  }, []);
+
+  // const getCallReportsCount = async () => {
+  //   const coll = collection(db, 'call_report');
+  //   const snapshot = await getCountFromServer(coll);
+  //   console.log('Total call reports:', snapshot.data().count);
+  //   return snapshot.data().count.toString();
+  // };
+
+  const [callReportCount, setCallReportCount] = useState<number | null>(null);
+  useEffect(() => {
+    const fetchCallReportsCount = async () => {
+      try {
+        const userId = auth.currentUser?.uid; // e.g. from auth or props
+        const coll = collection(db, 'call_reports');
+        const q = query(coll, where('userId', '==', userId)); // Filter by userId
+
+        const snapshot = await getCountFromServer(q);
+        setCallReportCount(snapshot.data().count);
+      } catch (error) {
+        console.error('Failed to fetch call report count:', error);
+      }
+    };
+
+    fetchCallReportsCount();
+  }, []);
 
   return (
     <AppSafeViews>
@@ -43,7 +100,8 @@ const Home = () => {
                 fontWeight: 'bold',
               }}
             >
-              {products.length + 29}
+              {/* {products.length + 29} */}
+              {callReportCount !== null ? callReportCount : '...'}
             </Text>
             <Text style={styles.headerContainerText}>
               Call Reports for July
@@ -105,10 +163,16 @@ const Home = () => {
       </View>
       <FlatList
         initialNumToRender={2}
+        data={callReport.slice(0, 10)} // Now using Firebase data
+        renderItem={({ item }) => <CallCards report={item} />} // Pass each report
+        keyExtractor={item => item.id}
+      />
+      {/* <FlatList
+        initialNumToRender={2}
         data={products.slice(0, 10)}
         renderItem={() => <CallCards />}
         keyExtractor={(item, index) => index.toString()}
-      />
+      /> */}
     </AppSafeViews>
   );
 };

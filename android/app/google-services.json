@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "196788206074",
+    "project_id": "callreport-6e546",
+    "storage_bucket": "callreport-6e546.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:196788206074:android:9f10d8c21c04dcc6100c43",
+        "android_client_info": {
+          "package_name": "com.marvin.call_report"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "196788206074-ihsb3i4g8asth0qmhuuf53rdgbm047pt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.marvin.call_report",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "196788206074-u1pse7n8r8thrg7hj0i5v8gma4vt3ee1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJpUnkoLy11j2n7NrEYvtA0CfPmxOPTRA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "196788206074-u1pse7n8r8thrg7hj0i5v8gma4vt3ee1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

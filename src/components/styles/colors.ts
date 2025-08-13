@@ -15,7 +15,7 @@ export const AppColors = {
   wheat: "#f5deb3",
   lightWheat: "#f5f5dc",
   mediumSeaGreen: "#3CB371",
-  lighterSeaGreen: "#c9eeda",
+  lighterSeaGreen: "#f5fbe5",
   lightSeaGreen: "#20B2AA",
   lightBlue:"#3296d7",
   orange:"#d78a32",
