@@ -59,6 +59,32 @@ const Home = () => {
     loadData();
   }, []);
 
+  const sortedReports = callReport
+    .filter(item => !!item.createdAt) // Avoid items without timestamp
+    .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate()); // Most recent first
+
+  const getLastCallReport = (): any | null => {
+    if (callReport.length === 0) return null;
+
+    // Sort by createdAt if it exists
+    const sorted = [...callReport].sort(
+      (a, b) => b.createdAt?.seconds - a.createdAt?.seconds
+    );
+
+    return sorted[0]; // most recent
+  };
+
+  const getMonthName = (timestamp: any): string => {
+    if (!timestamp?.seconds) return '';
+
+    const date = new Date(timestamp.seconds * 1000);
+    return date.toLocaleString('default', { month: 'long' });
+  };
+
+  const lastReport = getLastCallReport();
+  const monthName = getMonthName(lastReport?.createdAt);
+
+
   // const getCallReportsCount = async () => {
   //   const coll = collection(db, 'call_report');
   //   const snapshot = await getCountFromServer(coll);
@@ -104,20 +130,19 @@ const Home = () => {
               {callReportCount !== null ? callReportCount : '...'}
             </Text>
             <Text style={styles.headerContainerText}>
-              Call Reports for July
+              Call Reports for {monthName}
             </Text>
           </View>
 
           {/* 2nd Half of headerContainer  */}
-          <View style={styles.secondReportContainer}>
-            {/* <PieChart data={data} radius={50} /> */}
+          {/* <View style={styles.secondReportContainer}>
             <BarChart data={sampleData} width={150} height={100} />
             <Text style={styles.secondReportText}>
               Marketing 3 Appraisal 8{'\n'}
               Collection 4 Repossession 6{'\n'}
               Event 3 Insurance 9{'\n'}
             </Text>
-          </View>
+          </View> */}
         </View>
       </View>
 
@@ -163,7 +188,7 @@ const Home = () => {
       </View>
       <FlatList
         initialNumToRender={2}
-        data={callReport.slice(0, 10)} // Now using Firebase data
+        data={sortedReports.slice(0, 10)} // Now using Firebase data
         renderItem={({ item }) => <CallCards report={item} />} // Pass each report
         keyExtractor={item => item.id}
       />
@@ -196,7 +221,7 @@ const styles = StyleSheet.create({
   },
   reportContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',//'space-between',
     alignItems: 'center',
   },
   firstReportContainer: {

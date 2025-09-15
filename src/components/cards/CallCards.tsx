@@ -9,6 +9,7 @@ type ReportType = {
   order: string;
   customer: string;
   remarks: string;
+  type: string;
   // Add other fields as needed, e.g. customer, remarks, etc.
 };
 
@@ -23,9 +24,13 @@ const CallCards = ({ report }: { report: ReportType }) => {
         <Text style={styles.bodyText}>Date of Call</Text>
         <Text style={styles.bodyText}>{report.order}</Text>
       </View>
-      <View style={styles.customerView}>
+
+      {report.type == 'Customer' ? <View style={styles.customerView}>
         <Text numberOfLines={1} style={styles.bodyText}>Customer: {report.customer} </Text>
-      </View>
+      </View> : <View style={styles.customerView}>
+        <Text numberOfLines={1} style={styles.bodyText}>Dealer: {report.customer} </Text>
+      </View>}
+
 
       <View style={styles.customerView}>
         <Text numberOfLines={2} style={styles.bodyText}>Remarks: {report.remarks} </Text>

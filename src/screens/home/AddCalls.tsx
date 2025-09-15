@@ -19,6 +19,8 @@ import firestore, {
 import { auth, db } from '../../components/config/firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
 import HomeHeaders from '../../components/headers/HomeHeaders';
+import { IS_Android } from '../../constants/constants';
+import DateTimePicker from '@react-native-community/datetimepicker';
 // import { event } from 'react-native/types_generated/Libraries/Animated/AnimatedExports';
 
 // const data = ['Apple', 'Banana', 'Cherry', 'Date', 'Fig', 'Grape'];
@@ -32,6 +34,19 @@ const AddCalls = () => {
   // );
 
   const [date, setDate] = useState('');
+
+  const [showPicker, setShowPicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const handleChange = (event: any, dateValue?: Date) => {
+    setShowPicker(IS_Android); // keep open on iOS
+    if (dateValue) {
+      setSelectedDate(dateValue);
+      const formatted = dateValue.toLocaleDateString(); // e.g. 9/12/2025
+      setDate(formatted);
+      setShowPicker(false); 
+    }
+  };
   // const [type, setType] = useState('');
   // const [order, setOrder] = useState('');
   // const [customer, setCustomer] = useState('');
@@ -75,7 +90,7 @@ const AddCalls = () => {
           date: date,
           type: selectedCallType,
           order: selectedOrderType,
-          customer: selectedCustomerType,
+          customer: selectedCallType === 'Customer' ? selectedCustomerType :selectedDealerType,//selectedCustomerType,
           createdAt: firestore.FieldValue.serverTimestamp(),
           remarks: remarks,
           userId: user?.uid, // Store the user ID
@@ -160,22 +175,22 @@ const AddCalls = () => {
 
   const filteredCustomers = selectedCustomerType
     ? customerType.filter(
-        item =>
-          item.fullname &&
-          item.fullname
-            .toLowerCase()
-            .includes(selectedCustomerType.toLowerCase()),
-      )
+      item =>
+        item.fullname &&
+        item.fullname
+          .toLowerCase()
+          .includes(selectedCustomerType.toLowerCase()),
+    )
     : customerType;
 
   const filteredDealers = selectedDealerType
     ? dealerType.filter(
-        item =>
-          item.fullname &&
-          item.fullname
-            .toLowerCase()
-            .includes(selectedDealerType.toLowerCase()),
-      )
+      item =>
+        item.fullname &&
+        item.fullname
+          .toLowerCase()
+          .includes(selectedDealerType.toLowerCase()),
+    )
     : dealerType;
 
   return (
@@ -187,9 +202,21 @@ const AddCalls = () => {
           <AppTextInput
             placeholder="Date Of Calls"
             value={date}
-            onChangeText={setDate}
-            onFocus={hideAllDropdowns} 
+            onChangeText={() => { }} // prevent manual typing
+            onFocus={() => {
+              setShowPicker(true);
+              // optionally hide dropdowns here
+            }}
           />
+
+          {showPicker && (
+            <DateTimePicker
+              mode="date"
+              display="default"
+              value={selectedDate || new Date()}
+              onChange={handleChange}
+            />
+          )}
           <View style={styles.padding}>
             <TouchableOpacity
               onPress={() => {
@@ -201,7 +228,7 @@ const AddCalls = () => {
                 value={selectedCallType}
                 placeholder={'Call Type'}
                 editable={false}
-                // style={styles.textInputStyle}
+              // style={styles.textInputStyle}
               />
             </TouchableOpacity>
 
@@ -237,7 +264,7 @@ const AddCalls = () => {
                 value={selectedOrderType}
                 editable={false}
                 placeholder="Order Type"
-                // style={styles.textInputStyle}
+              // style={styles.textInputStyle}
               />
             </TouchableOpacity>
 
@@ -262,49 +289,7 @@ const AddCalls = () => {
             )}
           </View>
 
-          <View style={styles.padding}>
-            <AppTextInput
-              placeholder="Search Customer"
-              value={selectedCustomerType}
-              onChangeText={text => {
-                setSelectedCustomerType(text);
-                hideAllDropdowns();
-                setShowCustomerTypeList(true);
-              }}
-              onFocus={() => {
-                hideAllDropdowns();
-                setShowCustomerTypeList(true);
-              }}
-              // style={styles.textInputStyle}
-            />
-
-            {showCustomerTypeList && (
-              <View style={styles.dropdown}>
-                <FlatList
-                  data={filteredCustomers}
-                  keyExtractor={(item, index) => `${index}-${item.fullname}`}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedCustomerType(item.fullname ?? '');
-                        setShowCustomerTypeList(false);
-                      }}
-                      style={styles.item}
-                    >
-                      <Text>{item.fullname}</Text>
-                    </TouchableOpacity>
-                  )}
-                  initialNumToRender={10}
-                  maxToRenderPerBatch={15}
-                  windowSize={10}
-                  removeClippedSubviews={true}
-                  keyboardShouldPersistTaps="handled"
-                />
-              </View>
-            )}
-          </View>
-
-          <View style={styles.padding}>
+          {selectedCallType == 'Dealer' ?  <View style={styles.padding}>
             <AppTextInput
               placeholder="Search Dealer"
               value={selectedDealerType}
@@ -317,7 +302,7 @@ const AddCalls = () => {
                 hideAllDropdowns();
                 setShowDealerTypeList(true);
               }}
-              // style={styles.textInputStyle}
+            // style={styles.textInputStyle}
             />
 
             {showDealerTypeList && (
@@ -344,7 +329,51 @@ const AddCalls = () => {
                 />
               </View>
             )}
-          </View>
+          </View> : <View style={styles.padding}>
+            <AppTextInput
+              placeholder="Search Customer"
+              value={selectedCustomerType}
+              onChangeText={text => {
+                setSelectedCustomerType(text);
+                hideAllDropdowns();
+                setShowCustomerTypeList(true);
+              }}
+              onFocus={() => {
+                hideAllDropdowns();
+                setShowCustomerTypeList(true);
+              }}
+            // style={styles.textInputStyle}
+            />
+
+            {showCustomerTypeList && (
+              <View style={styles.dropdown}>
+                <FlatList
+                  data={filteredCustomers}
+                  keyExtractor={(item, index) => `${index}-${item.fullname}`}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedCustomerType(item.fullname ?? '');
+                        setShowCustomerTypeList(false);
+                      }}
+                      style={styles.item}
+                    >
+                      <Text>{item.fullname}</Text>
+                    </TouchableOpacity>
+                  )}
+                  initialNumToRender={10}
+                  maxToRenderPerBatch={15}
+                  windowSize={10}
+                  removeClippedSubviews={true}
+                  keyboardShouldPersistTaps="handled"
+                />
+              </View>
+            )}
+          </View>}
+
+          
+
+         
           {/* <AppTextInput placeholder="Remarks" /> */}
 
           <AppTextInput
@@ -355,12 +384,12 @@ const AddCalls = () => {
             maxLength={200}
             multiline
             style={styles.textInputRemarks}
-            onFocus={hideAllDropdowns} 
+            onFocus={hideAllDropdowns}
           />
         </View>
 
         <View style={styles.buttonContainer}>
-          <AppButtons title={'Submit'}  onPress={saveUser}/>
+          <AppButtons title={'Submit'} onPress={saveUser} />
           {/* <Button title="Submit" onPress={getCustomerCount} /> */}
           {/* <Button title="Submit" onPress={saveUser} /> */}
         </View>
