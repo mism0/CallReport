@@ -21,12 +21,14 @@ import { useNavigation } from '@react-navigation/native';
 import HomeHeaders from '../../components/headers/HomeHeaders';
 import { IS_Android } from '../../constants/constants';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import FlashMessage, { showMessage } from 'react-native-flash-message';
 // import { event } from 'react-native/types_generated/Libraries/Animated/AnimatedExports';
 
 // const data = ['Apple', 'Banana', 'Cherry', 'Date', 'Fig', 'Grape'];
 
 const AddCalls = () => {
   const navigation = useNavigation();
+
   // const [query, setQuery] = useState('');
 
   // const filteredData = data.filter(item =>
@@ -44,7 +46,7 @@ const AddCalls = () => {
       setSelectedDate(dateValue);
       const formatted = dateValue.toLocaleDateString(); // e.g. 9/12/2025
       setDate(formatted);
-      setShowPicker(false); 
+      setShowPicker(false);
     }
   };
   // const [type, setType] = useState('');
@@ -90,7 +92,10 @@ const AddCalls = () => {
           date: date,
           type: selectedCallType,
           order: selectedOrderType,
-          customer: selectedCallType === 'Customer' ? selectedCustomerType :selectedDealerType,//selectedCustomerType,
+          customer:
+            selectedCallType === 'Customer'
+              ? selectedCustomerType
+              : selectedDealerType, //selectedCustomerType,
           createdAt: firestore.FieldValue.serverTimestamp(),
           remarks: remarks,
           userId: user?.uid, // Store the user ID
@@ -98,7 +103,12 @@ const AddCalls = () => {
         .then(() => {
           console.log('Call report added!');
         });
-      Alert.alert('Report saved!');
+      showMessage({
+        message: 'Call Report saved!',
+        type: 'success',
+        color: AppColors.yellow,
+      });
+      // Alert.alert('Report saved!');
       navigation.navigate('BottomTabs');
     } catch (error) {
       Alert.alert('Error:', String(error));
@@ -175,226 +185,238 @@ const AddCalls = () => {
 
   const filteredCustomers = selectedCustomerType
     ? customerType.filter(
-      item =>
-        item.fullname &&
-        item.fullname
-          .toLowerCase()
-          .includes(selectedCustomerType.toLowerCase()),
-    )
+        item =>
+          item.fullname &&
+          item.fullname
+            .toLowerCase()
+            .includes(selectedCustomerType.toLowerCase()),
+      )
     : customerType;
 
   const filteredDealers = selectedDealerType
     ? dealerType.filter(
-      item =>
-        item.fullname &&
-        item.fullname
-          .toLowerCase()
-          .includes(selectedDealerType.toLowerCase()),
-    )
+        item =>
+          item.fullname &&
+          item.fullname
+            .toLowerCase()
+            .includes(selectedDealerType.toLowerCase()),
+      )
     : dealerType;
 
   return (
-    <AppSafeViews>
-      <HomeHeaders />
 
-      <View style={styles.container}>
-        <View style={styles.box}>
-          <AppTextInput
-            placeholder="Date Of Calls"
-            value={date}
-            onChangeText={() => { }} // prevent manual typing
-            onFocus={() => {
-              setShowPicker(true);
-              // optionally hide dropdowns here
-            }}
-          />
+      <AppSafeViews>
+        <HomeHeaders />
 
-          {showPicker && (
-            <DateTimePicker
-              mode="date"
-              display="default"
-              value={selectedDate || new Date()}
-              onChange={handleChange}
-            />
-          )}
-          <View style={styles.padding}>
-            <TouchableOpacity
-              onPress={() => {
-                hideAllDropdowns();
-                setShowCallTypeList(true);
+        <View style={styles.container}>
+          <View style={styles.box}>
+            <AppTextInput
+              placeholder="Date Of Calls"
+              value={date}
+              onChangeText={() => {}} // prevent manual typing
+              onFocus={() => {
+                setShowPicker(true);
+                // optionally hide dropdowns here
               }}
-            >
-              <AppTextInput
-                value={selectedCallType}
-                placeholder={'Call Type'}
-                editable={false}
-              // style={styles.textInputStyle}
-              />
-            </TouchableOpacity>
+            />
 
-            {showCallTypeList && (
-              <View style={styles.dropdown}>
-                <FlatList
-                  data={callType}
-                  keyExtractor={item => item}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedCallType(item);
-                        setShowCallTypeList(false);
-                      }}
-                      style={styles.item}
-                    >
-                      <Text>{item}</Text>
-                    </TouchableOpacity>
-                  )}
+            {showPicker && (
+              <DateTimePicker
+                mode="date"
+                display="default"
+                value={selectedDate || new Date()}
+                onChange={handleChange}
+              />
+            )}
+            <View style={styles.padding}>
+              <TouchableOpacity
+                onPress={() => {
+                  hideAllDropdowns();
+                  setShowCallTypeList(true);
+                }}
+              >
+                <AppTextInput
+                  value={selectedCallType}
+                  placeholder={'Call Type'}
+                  editable={false}
+                  // style={styles.textInputStyle}
                 />
+              </TouchableOpacity>
+
+              {showCallTypeList && (
+                <View style={styles.dropdown}>
+                  <FlatList
+                    data={callType}
+                    keyExtractor={item => item}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedCallType(item);
+                          setShowCallTypeList(false);
+                        }}
+                        style={styles.item}
+                      >
+                        <Text>{item}</Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              )}
+            </View>
+
+            <View style={styles.padding}>
+              <TouchableOpacity
+                onPress={() => {
+                  hideAllDropdowns();
+                  setShowOrderTypeList(true);
+                }}
+              >
+                <AppTextInput
+                  value={selectedOrderType}
+                  editable={false}
+                  placeholder="Order Type"
+                  // style={styles.textInputStyle}
+                />
+              </TouchableOpacity>
+
+              {showOrderTypeList && (
+                <View style={styles.dropdown}>
+                  <FlatList
+                    data={orderType}
+                    keyExtractor={item => item}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedOrderType(item);
+                          setShowOrderTypeList(false);
+                        }}
+                        style={styles.item}
+                      >
+                        <Text>{item}</Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              )}
+            </View>
+
+            {selectedCallType == 'Dealer' ? (
+              <View style={styles.padding}>
+                <AppTextInput
+                  placeholder="Search Dealer"
+                  value={selectedDealerType}
+                  onChangeText={text => {
+                    setSelectedDealerType(text);
+                    hideAllDropdowns();
+                    setShowDealerTypeList(true);
+                  }}
+                  onFocus={() => {
+                    hideAllDropdowns();
+                    setShowDealerTypeList(true);
+                  }}
+                  // style={styles.textInputStyle}
+                />
+
+                {showDealerTypeList && (
+                  <View style={styles.dropdown}>
+                    <FlatList
+                      data={filteredDealers}
+                      keyExtractor={(item, index) =>
+                        `${index}-${item.fullname}`
+                      }
+                      renderItem={({ item }) => (
+                        <TouchableOpacity
+                          onPress={() => {
+                            setSelectedDealerType(item.fullname ?? '');
+                            setShowDealerTypeList(false);
+                          }}
+                          style={styles.item}
+                        >
+                          <Text>{item.fullname}</Text>
+                        </TouchableOpacity>
+                      )}
+                      initialNumToRender={10}
+                      maxToRenderPerBatch={15}
+                      windowSize={10}
+                      removeClippedSubviews={true}
+                      keyboardShouldPersistTaps="handled"
+                    />
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={styles.padding}>
+                <AppTextInput
+                  placeholder="Search Customer"
+                  value={selectedCustomerType}
+                  onChangeText={text => {
+                    setSelectedCustomerType(text);
+                    hideAllDropdowns();
+                    setShowCustomerTypeList(true);
+                  }}
+                  onFocus={() => {
+                    hideAllDropdowns();
+                    setShowCustomerTypeList(true);
+                  }}
+                  // style={styles.textInputStyle}
+                />
+
+                {showCustomerTypeList && (
+                  <View style={styles.dropdown}>
+                    <FlatList
+                      data={filteredCustomers}
+                      keyExtractor={(item, index) =>
+                        `${index}-${item.fullname}`
+                      }
+                      renderItem={({ item }) => (
+                        <TouchableOpacity
+                          onPress={() => {
+                            setSelectedCustomerType(item.fullname ?? '');
+                            setShowCustomerTypeList(false);
+                          }}
+                          style={styles.item}
+                        >
+                          <Text>{item.fullname}</Text>
+                        </TouchableOpacity>
+                      )}
+                      initialNumToRender={10}
+                      maxToRenderPerBatch={15}
+                      windowSize={10}
+                      removeClippedSubviews={true}
+                      keyboardShouldPersistTaps="handled"
+                    />
+                  </View>
+                )}
               </View>
             )}
+
+            {/* <AppTextInput placeholder="Remarks" /> */}
+
+            <AppTextInput
+              value={remarks}
+              onChangeText={setRemarks}
+              placeholder="Remarks"
+              numberOfLines={6}
+              maxLength={200}
+              multiline
+              style={styles.textInputRemarks}
+              onFocus={hideAllDropdowns}
+            />
           </View>
 
-          <View style={styles.padding}>
-            <TouchableOpacity
+          <View style={styles.buttonContainer}>
+            <AppButtons
+              title={'Submit'}
               onPress={() => {
-                hideAllDropdowns();
-                setShowOrderTypeList(true);
+                saveUser();
               }}
-            >
-              <AppTextInput
-                value={selectedOrderType}
-                editable={false}
-                placeholder="Order Type"
-              // style={styles.textInputStyle}
-              />
-            </TouchableOpacity>
-
-            {showOrderTypeList && (
-              <View style={styles.dropdown}>
-                <FlatList
-                  data={orderType}
-                  keyExtractor={item => item}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedOrderType(item);
-                        setShowOrderTypeList(false);
-                      }}
-                      style={styles.item}
-                    >
-                      <Text>{item}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            )}
+            />
+            {/* <Button title="Submit" onPress={getCustomerCount} /> */}
+            {/* <Button title="Submit" onPress={saveUser} /> */}
           </View>
-
-          {selectedCallType == 'Dealer' ?  <View style={styles.padding}>
-            <AppTextInput
-              placeholder="Search Dealer"
-              value={selectedDealerType}
-              onChangeText={text => {
-                setSelectedDealerType(text);
-                hideAllDropdowns();
-                setShowDealerTypeList(true);
-              }}
-              onFocus={() => {
-                hideAllDropdowns();
-                setShowDealerTypeList(true);
-              }}
-            // style={styles.textInputStyle}
-            />
-
-            {showDealerTypeList && (
-              <View style={styles.dropdown}>
-                <FlatList
-                  data={filteredDealers}
-                  keyExtractor={(item, index) => `${index}-${item.fullname}`}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedDealerType(item.fullname ?? '');
-                        setShowDealerTypeList(false);
-                      }}
-                      style={styles.item}
-                    >
-                      <Text>{item.fullname}</Text>
-                    </TouchableOpacity>
-                  )}
-                  initialNumToRender={10}
-                  maxToRenderPerBatch={15}
-                  windowSize={10}
-                  removeClippedSubviews={true}
-                  keyboardShouldPersistTaps="handled"
-                />
-              </View>
-            )}
-          </View> : <View style={styles.padding}>
-            <AppTextInput
-              placeholder="Search Customer"
-              value={selectedCustomerType}
-              onChangeText={text => {
-                setSelectedCustomerType(text);
-                hideAllDropdowns();
-                setShowCustomerTypeList(true);
-              }}
-              onFocus={() => {
-                hideAllDropdowns();
-                setShowCustomerTypeList(true);
-              }}
-            // style={styles.textInputStyle}
-            />
-
-            {showCustomerTypeList && (
-              <View style={styles.dropdown}>
-                <FlatList
-                  data={filteredCustomers}
-                  keyExtractor={(item, index) => `${index}-${item.fullname}`}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setSelectedCustomerType(item.fullname ?? '');
-                        setShowCustomerTypeList(false);
-                      }}
-                      style={styles.item}
-                    >
-                      <Text>{item.fullname}</Text>
-                    </TouchableOpacity>
-                  )}
-                  initialNumToRender={10}
-                  maxToRenderPerBatch={15}
-                  windowSize={10}
-                  removeClippedSubviews={true}
-                  keyboardShouldPersistTaps="handled"
-                />
-              </View>
-            )}
-          </View>}
-
-          
-
-         
-          {/* <AppTextInput placeholder="Remarks" /> */}
-
-          <AppTextInput
-            value={remarks}
-            onChangeText={setRemarks}
-            placeholder="Remarks"
-            numberOfLines={6}
-            maxLength={200}
-            multiline
-            style={styles.textInputRemarks}
-            onFocus={hideAllDropdowns}
-          />
         </View>
+      </AppSafeViews>
 
-        <View style={styles.buttonContainer}>
-          <AppButtons title={'Submit'} onPress={saveUser} />
-          {/* <Button title="Submit" onPress={getCustomerCount} /> */}
-          {/* <Button title="Submit" onPress={saveUser} /> */}
-        </View>
-      </View>
-    </AppSafeViews>
   );
 };
 

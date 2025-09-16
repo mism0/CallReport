@@ -1,0 +1,516 @@
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { IS_Android } from '../../constants/constants';
+import { auth, db } from '../../components/config/firebaseConfig';
+import firestore, {
+  collection,
+  getDocs,
+} from '@react-native-firebase/firestore';
+import AppSafeViews from '../../components/views/AppSafeViews';
+import HomeHeaders from '../../components/headers/HomeHeaders';
+import AppTextInput from '../../components/inputs/AppTextInput';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import AppButtons from '../../components/buttons/AppButtons';
+import { AppColors } from '../../components/styles/colors';
+import { useRoute } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
+
+const EditCalls = () => {
+  const navigation = useNavigation();
+
+  const route = useRoute();
+  const { callData } = route.params || {};
+
+  const [date, setDate] = useState('');
+
+  const [showPicker, setShowPicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const handleChange = (event: any, dateValue?: Date) => {
+    setShowPicker(IS_Android); // keep open on iOS
+    if (dateValue) {
+      setSelectedDate(dateValue);
+      const formatted = dateValue.toLocaleDateString(); // e.g. 9/12/2025
+      setDate(formatted);
+      setShowPicker(false);
+    }
+  };
+  const [callType, setCallType] = useState([]);
+  const [selectedCallType, setSelectedCallType] = useState('');
+  const [showCallTypeList, setShowCallTypeList] = useState(false);
+  const [orderType, setOrderType] = useState([]);
+  const [selectedOrderType, setSelectedOrderType] = useState('');
+  const [showOrderTypeList, setShowOrderTypeList] = useState(false);
+
+  type CustomerType = { fullname: string | null };
+  const [customerType, setCustomerType] = useState<CustomerType[]>([]);
+  const [selectedCustomerType, setSelectedCustomerType] = useState('');
+  const [showCustomerTypeList, setShowCustomerTypeList] = useState(false);
+
+  type DealerType = { fullname: string | null };
+  const [dealerType, setDealerType] = useState<DealerType[]>([]);
+  const [selectedDealerType, setSelectedDealerType] = useState('');
+  const [showDealerTypeList, setShowDealerTypeList] = useState(false);
+
+  const [remarks, setRemarks] = useState('');
+
+  useEffect(() => {
+    if (callData) {
+      setDate(callData.date || '');
+      setSelectedCallType(callData.type || '');
+      setSelectedOrderType(callData.order || '');
+      setRemarks(callData.remarks || '');
+
+      if (callData.type === 'Customer') {
+        setSelectedCustomerType(callData.customer || '');
+      } else {
+        setSelectedDealerType(callData.customer || '');
+      }
+    }
+  }, [callData]);
+
+  const hideAllDropdowns = () => {
+    setShowCallTypeList(false);
+    setShowOrderTypeList(false);
+    setShowCustomerTypeList(false);
+    setShowDealerTypeList(false);
+  };
+
+  const user = auth.currentUser;
+  console.log(auth.currentUser);
+
+  const saveUser = async () => {
+    try {
+      const token = await user?.getIdToken();
+      console.log('Firebase Auth Token:', token);
+
+      const reportData = {
+        date: date,
+        type: selectedCallType,
+        order: selectedOrderType,
+        customer:
+          selectedCallType === 'Customer'
+            ? selectedCustomerType
+            : selectedDealerType,
+        remarks: remarks,
+        userId: user?.uid,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (callData?.id) {
+        // Update existing document
+        await firestore()
+          .collection('call_reports')
+          .doc(callData.id)
+          .update(reportData);
+        console.log('Call report updated!');
+        showMessage({
+          message: 'Call Report saved!',
+          type: 'success',
+          color: AppColors.yellow,
+        });
+        // Alert.alert('Report updated!');
+      } else {
+        // // Create new document
+        // await firestore()
+        //   .collection('call_reports')
+        //   .add({
+        //     ...reportData,
+        //     createdAt: firestore.FieldValue.serverTimestamp(),
+        //   });
+        // console.log('Call report added!');
+        Alert.alert('Report not saved!');
+      }
+
+      navigation.navigate('BottomTabs');
+    } catch (error) {
+      Alert.alert('Error:', String(error));
+    }
+  };
+
+  // const saveUser = async () => {
+  //   try {
+  //     const token = await user?.getIdToken();
+  //     console.log('Firebase Auth Token:', token);
+
+  //     await firestore()
+  //       .collection('call_reports') // Collection name
+  //       .add({
+  //         date: date,
+  //         type: selectedCallType,
+  //         order: selectedOrderType,
+  //         customer:
+  //           selectedCallType === 'Customer'
+  //             ? selectedCustomerType
+  //             : selectedDealerType, //selectedCustomerType,
+  //         createdAt: firestore.FieldValue.serverTimestamp(),
+  //         remarks: remarks,
+  //         userId: user?.uid, // Store the user ID
+  //       })
+  //       .then(() => {
+  //         console.log('Call report added!');
+  //       });
+  //     Alert.alert('Report saved!');
+  //     navigation.navigate('BottomTabs');
+  //   } catch (error) {
+  //     Alert.alert('Error:', String(error));
+  //   }
+  // };
+
+  const fetchCallType = async () => {
+    const callTypeRef = collection(db, 'call_type');
+    const snapshot = await getDocs(callTypeRef);
+    const callTypeList = snapshot.docs.map((doc: any) => doc.data().type);
+    return callTypeList;
+  };
+
+  const fetchOrderType = async () => {
+    const orderTypeRef = collection(db, 'order_type');
+    const snapshot = await getDocs(orderTypeRef);
+    const orderTypeList = snapshot.docs.map((doc: any) => doc.data().order);
+    return orderTypeList;
+  };
+
+  const fetchCustomerType = async () => {
+    const customerTypeRef = collection(db, 'customer');
+    const snapshot = await getDocs(customerTypeRef);
+    const customerTypeList = snapshot.docs.map((doc: any) => {
+      const data = doc.data();
+      return {
+        fullname: data
+          ? data.fname != null
+            ? `${data.lname}, ${data.fname} ${data.mname}`.trim()
+            : `${data.lname}`
+          : null,
+      };
+    });
+    return customerTypeList;
+  };
+
+  const fetchDealerType = async () => {
+    const dealerTypeRef = collection(db, 'dealer');
+    const snapshot = await getDocs(dealerTypeRef);
+    const dealerTypeList = snapshot.docs.map((doc: any) => {
+      const data = doc.data();
+      return {
+        fullname: data ? `${data.dlrname}`.trim() : null,
+      };
+    });
+    return dealerTypeList;
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      const data = await fetchCallType();
+      setCallType(data);
+
+      const data2 = await fetchOrderType();
+      setOrderType(data2);
+
+      const data3 = await fetchCustomerType();
+      console.log('Customer Type Data:', data3);
+      setCustomerType(data3);
+
+      const data4 = await fetchDealerType();
+      console.log('Dealer Type Data:', data4);
+      setDealerType(data4);
+    };
+    loadData();
+  }, []);
+
+  const filteredCustomers = selectedCustomerType
+    ? customerType.filter(
+        item =>
+          item.fullname &&
+          item.fullname
+            .toLowerCase()
+            .includes(selectedCustomerType.toLowerCase()),
+      )
+    : customerType;
+
+  const filteredDealers = selectedDealerType
+    ? dealerType.filter(
+        item =>
+          item.fullname &&
+          item.fullname
+            .toLowerCase()
+            .includes(selectedDealerType.toLowerCase()),
+      )
+    : dealerType;
+
+  return (
+    <AppSafeViews>
+      <HomeHeaders />
+
+      <View style={styles.container}>
+        <View style={styles.box}>
+          <AppTextInput
+            placeholder="Date Of Calls"
+            value={date}
+            onChangeText={() => {}} // prevent manual typing
+            onFocus={() => {
+              setShowPicker(true);
+              // optionally hide dropdowns here
+            }}
+          />
+
+          {showPicker && (
+            <DateTimePicker
+              mode="date"
+              display="default"
+              value={selectedDate || new Date()}
+              onChange={handleChange}
+            />
+          )}
+          <View style={styles.padding}>
+            <TouchableOpacity
+              onPress={() => {
+                hideAllDropdowns();
+                setShowCallTypeList(true);
+              }}
+            >
+              <AppTextInput
+                value={selectedCallType}
+                placeholder={'Call Type'}
+                editable={false}
+                // style={styles.textInputStyle}
+              />
+            </TouchableOpacity>
+
+            {showCallTypeList && (
+              <View style={styles.dropdown}>
+                <FlatList
+                  data={callType}
+                  keyExtractor={item => item}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedCallType(item);
+                        setShowCallTypeList(false);
+                      }}
+                      style={styles.item}
+                    >
+                      <Text>{item}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            )}
+          </View>
+
+          <View style={styles.padding}>
+            <TouchableOpacity
+              onPress={() => {
+                hideAllDropdowns();
+                setShowOrderTypeList(true);
+              }}
+            >
+              <AppTextInput
+                value={selectedOrderType}
+                editable={false}
+                placeholder="Order Type"
+                // style={styles.textInputStyle}
+              />
+            </TouchableOpacity>
+
+            {showOrderTypeList && (
+              <View style={styles.dropdown}>
+                <FlatList
+                  data={orderType}
+                  keyExtractor={item => item}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedOrderType(item);
+                        setShowOrderTypeList(false);
+                      }}
+                      style={styles.item}
+                    >
+                      <Text>{item}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            )}
+          </View>
+
+          {selectedCallType == 'Dealer' ? (
+            <View style={styles.padding}>
+              <AppTextInput
+                placeholder="Search Dealer"
+                value={selectedDealerType}
+                onChangeText={text => {
+                  setSelectedDealerType(text);
+                  hideAllDropdowns();
+                  setShowDealerTypeList(true);
+                }}
+                onFocus={() => {
+                  hideAllDropdowns();
+                  setShowDealerTypeList(true);
+                }}
+                // style={styles.textInputStyle}
+              />
+
+              {showDealerTypeList && (
+                <View style={styles.dropdown}>
+                  <FlatList
+                    data={filteredDealers}
+                    keyExtractor={(item, index) => `${index}-${item.fullname}`}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedDealerType(item.fullname ?? '');
+                          setShowDealerTypeList(false);
+                        }}
+                        style={styles.item}
+                      >
+                        <Text>{item.fullname}</Text>
+                      </TouchableOpacity>
+                    )}
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={15}
+                    windowSize={10}
+                    removeClippedSubviews={true}
+                    keyboardShouldPersistTaps="handled"
+                  />
+                </View>
+              )}
+            </View>
+          ) : (
+            <View style={styles.padding}>
+              <AppTextInput
+                placeholder="Search Customer"
+                value={selectedCustomerType}
+                onChangeText={text => {
+                  setSelectedCustomerType(text);
+                  hideAllDropdowns();
+                  setShowCustomerTypeList(true);
+                }}
+                onFocus={() => {
+                  hideAllDropdowns();
+                  setShowCustomerTypeList(true);
+                }}
+                // style={styles.textInputStyle}
+              />
+
+              {showCustomerTypeList && (
+                <View style={styles.dropdown}>
+                  <FlatList
+                    data={filteredCustomers}
+                    keyExtractor={(item, index) => `${index}-${item.fullname}`}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedCustomerType(item.fullname ?? '');
+                          setShowCustomerTypeList(false);
+                        }}
+                        style={styles.item}
+                      >
+                        <Text>{item.fullname}</Text>
+                      </TouchableOpacity>
+                    )}
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={15}
+                    windowSize={10}
+                    removeClippedSubviews={true}
+                    keyboardShouldPersistTaps="handled"
+                  />
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* <AppTextInput placeholder="Remarks" /> */}
+
+          <AppTextInput
+            value={remarks}
+            onChangeText={setRemarks}
+            placeholder="Remarks"
+            numberOfLines={6}
+            maxLength={200}
+            multiline
+            style={styles.textInputRemarks}
+            onFocus={hideAllDropdowns}
+          />
+        </View>
+
+        <View style={styles.buttonContainer}>
+          <AppButtons title={'Submit'} onPress={saveUser} />
+          {/* <Button title="Submit" onPress={getCustomerCount} /> */}
+          {/* <Button title="Submit" onPress={saveUser} /> */}
+        </View>
+      </View>
+    </AppSafeViews>
+  );
+};
+
+export default EditCalls;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  box: {
+    backgroundColor: AppColors.white,
+    borderRadius: 30,
+    margin: 20,
+    padding: 20,
+    elevation: 5,
+    width: '90%',
+  },
+  buttonContainer: {
+    marginTop: 10,
+    width: '90%',
+    borderRadius: 20,
+    padding: 10,
+    paddingBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginHorizontal: 10,
+    marginTop: 10,
+  },
+  dropdown: {
+    position: 'absolute',
+    top: 58, // height of TextInput + margin (adjust as needed)
+    width: '100%',
+    backgroundColor: AppColors.lighterSeaGreen,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    maxHeight: 150,
+    zIndex: 2,
+  },
+  item: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  textInputStyle: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+  },
+  padding: { paddingVertical: 5 },
+  textInputRemarks: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 10,
+    height: 100,
+    textAlignVertical: 'top',
+  },
+});
