@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, Touchable, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import AppSafeViews from '../../components/views/AppSafeViews';
 import { products } from '../../data/products';
@@ -6,9 +6,10 @@ import CallCards from '../../components/cards/CallCards';
 import HomeHeaders from '../../components/headers/HomeHeaders';
 import { collection, getDocs, query, where } from '@react-native-firebase/firestore';
 import { auth, db } from '../../components/config/firebaseConfig';
+import { useNavigation } from '@react-navigation/native';
 
 const Calls = () => {
-
+ const navigation = useNavigation();
   const [callReport, setCallReport] = useState<any[]>([]);
 
   const fetchCallReport = async () => {
@@ -47,8 +48,15 @@ const Calls = () => {
             ...item,
             order: item.order ?? '', // Provide a default value if 'order' is missing
           }))}
-          renderItem={({ item }) => <CallCards report={item} />}
           keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditCalls', { callData: item })}
+            activeOpacity={0.7}
+          >
+            <CallCards report={item} />
+          </TouchableOpacity>
+        )}
         />
       </View>
     </AppSafeViews>

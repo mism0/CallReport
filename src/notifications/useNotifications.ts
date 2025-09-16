@@ -29,10 +29,10 @@ export const useNotifications = () => {
 
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      const msgBody =  remoteMessage.notification?.body
-      const msgTitle = remoteMessage.notification?.title
+      const msgBody = remoteMessage.notification?.body ?? 'No message body';
+      const msgTitle = remoteMessage.notification?.title ?? 'Notification';
       //  Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
-      Alert.alert(msgTitle,msgBody)
+      Alert.alert(msgTitle, msgBody)
     });
 
     return unsubscribe;

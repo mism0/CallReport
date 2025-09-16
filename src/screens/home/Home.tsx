@@ -16,6 +16,7 @@ import { AppFonts } from '../../components/styles/fonts';
 import BarChart from '../../components/charts/BarChart';
 import { useNavigation } from '@react-navigation/native';
 import HomeHeaders from '../../components/headers/HomeHeaders';
+
 import {
   collection,
   getCountFromServer,
@@ -68,7 +69,7 @@ const Home = () => {
 
     // Sort by createdAt if it exists
     const sorted = [...callReport].sort(
-      (a, b) => b.createdAt?.seconds - a.createdAt?.seconds
+      (a, b) => b.createdAt?.seconds - a.createdAt?.seconds,
     );
 
     return sorted[0]; // most recent
@@ -83,7 +84,6 @@ const Home = () => {
 
   const lastReport = getLastCallReport();
   const monthName = getMonthName(lastReport?.createdAt);
-
 
   // const getCallReportsCount = async () => {
   //   const coll = collection(db, 'call_report');
@@ -189,8 +189,15 @@ const Home = () => {
       <FlatList
         initialNumToRender={2}
         data={sortedReports.slice(0, 10)} // Now using Firebase data
-        renderItem={({ item }) => <CallCards report={item} />} // Pass each report
         keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditCalls', { callData: item })}
+            activeOpacity={0.7}
+          >
+            <CallCards report={item} />
+          </TouchableOpacity>
+        )}
       />
       {/* <FlatList
         initialNumToRender={2}
@@ -221,7 +228,7 @@ const styles = StyleSheet.create({
   },
   reportContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',//'space-between',
+    justifyContent: 'center', //'space-between',
     alignItems: 'center',
   },
   firstReportContainer: {
