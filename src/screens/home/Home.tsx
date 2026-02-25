@@ -10,21 +10,23 @@ import AppSafeViews from '../../components/views/AppSafeViews';
 import { AppColors } from '../../components/styles/colors';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import CallCards from '../../components/cards/CallCards';
-import { products } from '../../data/products';
 import { s } from 'react-native-size-matters';
 import { AppFonts } from '../../components/styles/fonts';
 import BarChart from '../../components/charts/BarChart';
 import { useNavigation } from '@react-navigation/native';
 import HomeHeaders from '../../components/headers/HomeHeaders';
-
+import auth from '@react-native-firebase/auth';
 import {
   collection,
-  getCountFromServer,
-  getDocs,
+  doc,
+  getDoc,
+  getFirestore,
+  onSnapshot,
   query,
   where,
 } from '@react-native-firebase/firestore';
-import { auth, db } from '../../components/config/firebaseConfig';
+import { getApp } from '@react-native-firebase/app';
+
 const Home = () => {
   const navigation = useNavigation();
   const sampleData = [
@@ -37,39 +39,90 @@ const Home = () => {
   ];
 
   const [callReport, setCallReport] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [authReady, setAuthReady] = useState(false);
 
-  const fetchCallReport = async () => {
-    const callReportRef = collection(db, 'call_reports');
-    const userId = auth.currentUser?.uid; // Get the current user's ID
-    const q = query(callReportRef, where('userId', '==', userId)); // Filter by userId
+  useEffect(() => {
+    const unsub = auth().onAuthStateChanged(u => {
+      console.log('AUTH USER:', JSON.stringify(u?.uid, null, 2));
+      setUser(u);
+      setAuthReady(true); // ✅ IMPORTANT
+    });
 
-    const snapshot = await getDocs(q);
-    // Include document ID + all fields
-    const callReportList = snapshot.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    return callReportList;
+    return unsub;
+  }, []);
+
+  const [userdb, setUserdb] = useState<any>(null);
+
+  const fetchUserProfile = async () => {
+    if (!user?.uid) return null;
+
+    const db = getFirestore(getApp());
+    const userRef = doc(db, 'users', user.uid); // ✅ DOCUMENT
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+      console.warn('User profile not found');
+      return null;
+    }
+
+    return {
+      id: snap.id,
+      ...snap.data(),
+    };
   };
 
   useEffect(() => {
-    const loadData = async () => {
-      const data = await fetchCallReport();
-      setCallReport(data);
-    };
-    loadData();
-  }, []);
+    if (!user?.uid) return;
 
-  const sortedReports = callReport
-    .filter(item => !!item.createdAt) // Avoid items without timestamp
-    .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate()); // Most recent first
+    const loadUserData = async () => {
+      const data = await fetchUserProfile();
+      setUserdb(data);
+    };
+
+    loadUserData();
+  }, [user?.uid]);
+
+  console.log('USER CODE:', userdb?.username);
+
+  useEffect(() => {
+    if (!userdb?.username) return;
+
+    const db = getFirestore(getApp());
+    const callReportRef = collection(db, 'call_reports');
+    const q = query(
+      callReportRef,
+      where('aocode', '==', userdb.username),
+      // where('sync', '==', 'N'),
+    );
+
+    // Listen for real-time updates
+    const unsubscribe = onSnapshot(q, snapshot => {
+      const callReportList = snapshot.docs.map(
+        (doc: { id: any; data: () => any }) => ({
+          id: doc.id,
+          ...doc.data(),
+        }),
+      );
+
+      const sorted = callReportList.sort(
+        (a: { callmemono: string }, b: { callmemono: string }) =>
+          Number(b.callmemono) - Number(a.callmemono),
+      );
+
+      setCallReport(sorted);
+    });
+
+    // Cleanup listener on unmount
+    return () => unsubscribe();
+  }, [userdb]);
 
   const getLastCallReport = (): any | null => {
     if (callReport.length === 0) return null;
 
-    // Sort by createdAt if it exists
+    // Sort by dateofcall if it exists
     const sorted = [...callReport].sort(
-      (a, b) => b.createdAt?.seconds - a.createdAt?.seconds,
+      (a, b) => b.dateofcall?.seconds - a.dateofcall?.seconds,
     );
 
     return sorted[0]; // most recent
@@ -83,59 +136,54 @@ const Home = () => {
   };
 
   const lastReport = getLastCallReport();
-  const monthName = getMonthName(lastReport?.createdAt);
-
-  // const getCallReportsCount = async () => {
-  //   const coll = collection(db, 'call_report');
-  //   const snapshot = await getCountFromServer(coll);
-  //   console.log('Total call reports:', snapshot.data().count);
-  //   return snapshot.data().count.toString();
-  // };
+  // const monthName = getMonthName(lastReport?.dateofcall);
+  const monthName = new Date().toLocaleString('default', { month: 'long' });
 
   const [callReportCount, setCallReportCount] = useState<number | null>(null);
+
   useEffect(() => {
-    const fetchCallReportsCount = async () => {
-      try {
-        const userId = auth.currentUser?.uid; // e.g. from auth or props
-        const coll = collection(db, 'call_reports');
-        const q = query(coll, where('userId', '==', userId)); // Filter by userId
+    if (!callReport) return;
 
-        const snapshot = await getCountFromServer(q);
-        setCallReportCount(snapshot.data().count);
-      } catch (error) {
-        console.error('Failed to fetch call report count:', error);
-      }
-    };
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    fetchCallReportsCount();
-  }, []);
+    const count = callReport.filter(report => {
+      const date = report.dateofcall?.seconds
+        ? new Date(report.dateofcall.seconds * 1000)
+        : null;
+      return date && date >= startOfMonth && date <= endOfMonth;
+    }).length;
+
+    setCallReportCount(count);
+  }, [callReport]);
 
   return (
     <AppSafeViews>
       <HomeHeaders />
-      <View style={styles.headerContainer}>
-        {/*  eslint-disable-next-line react-native/no-inline-styles */}
-        <View style={styles.reportContainer}>
-          {/* 1st Half of headerContainer */}
-          <View style={styles.firstReportContainer}>
-            <Text
-              // eslint-disable-next-line react-native/no-inline-styles
-              style={{
-                fontSize: 80,
-                fontFamily: 'NotoSans-Light',
-                fontWeight: 'bold',
-              }}
-            >
-              {/* {products.length + 29} */}
-              {callReportCount !== null ? callReportCount : '...'}
-            </Text>
-            <Text style={styles.headerContainerText}>
-              Call Reports for {monthName}
-            </Text>
-          </View>
+      {/* <View style={styles.headerContainer}> */} //pepe topbox
+      {/*  eslint-disable-next-line react-native/no-inline-styles */}
+      <View style={styles.reportContainer}>
+        {/* 1st Half of headerContainer */}
+        <View style={styles.firstReportContainer}>
+          <Text
+            // eslint-disable-next-line react-native/no-inline-styles
+            style={{
+              fontSize: 80,
+              fontFamily: 'NotoSans-Light',
+              fontWeight: 'bold',
+            }}
+          >
+            {/* {products.length + 29} */}
+            {callReportCount !== null ? callReportCount : '...'}
+          </Text>
+          <Text style={styles.headerContainerText}>
+            Call Reports for {monthName}
+          </Text>
+        </View>
 
-          {/* 2nd Half of headerContainer  */}
-          {/* <View style={styles.secondReportContainer}>
+        {/* 2nd Half of headerContainer  */}
+        {/* <View style={styles.secondReportContainer}>
             <BarChart data={sampleData} width={150} height={100} />
             <Text style={styles.secondReportText}>
               Marketing 3 Appraisal 8{'\n'}
@@ -143,9 +191,8 @@ const Home = () => {
               Event 3 Insurance 9{'\n'}
             </Text>
           </View> */}
-        </View>
       </View>
-
+      {/* </View> */}
       {/* Go to AddCalls.tsx screen */}
       <TouchableOpacity onPress={() => navigation.navigate('AddCalls')}>
         <View style={styles.actionsContainer}>
@@ -155,7 +202,6 @@ const Home = () => {
           </View>
         </View>
       </TouchableOpacity>
-
       <View style={styles.activityContainer}>
         <Text
           // eslint-disable-next-line react-native/no-inline-styles
@@ -188,7 +234,7 @@ const Home = () => {
       </View>
       <FlatList
         initialNumToRender={2}
-        data={sortedReports.slice(0, 10)} // Now using Firebase data
+        data={callReport} // Now using Firebase data
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -237,6 +283,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderWidth: 1,
     borderRadius: 40,
+    elevation: 5,
+    marginHorizontal: 20,
+    borderColor: AppColors.lightSeaGreen,
     backgroundColor: AppColors.white,
   },
   secondReportContainer: { justifyContent: 'center', alignItems: 'center' },

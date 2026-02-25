@@ -4,6 +4,8 @@ import Profile from '../screens/profile/Profile';
 import Sync from '../screens/sync/Sync';
 import { AppColors } from '../components/styles/colors';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
+import SyncStack from './SyncStack';
+import HomeStack from './HomeStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -30,8 +32,8 @@ export default function BottomTabs() {
         headerShown: false,
       }}
     >
-      <Tab.Screen options={{ title: 'Home', tabBarIcon: HomeTabBarIcon }} name="Home" component={Home} />
-      <Tab.Screen options={{ title: 'Sync', tabBarIcon: SyncTabBarIcon }} name="Sync" component={Sync} />
+      <Tab.Screen options={{ title: 'Home', tabBarIcon: HomeTabBarIcon }} name="Home" component={HomeStack} />
+      <Tab.Screen options={{ title: 'Sync', tabBarIcon: SyncTabBarIcon }} name="Sync" component={SyncStack} />
       <Tab.Screen options={{ title: 'Profile', tabBarIcon: ProfileTabBarIcon }} name="Profile" component={Profile} />
     </Tab.Navigator>
   );
